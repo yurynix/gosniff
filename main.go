@@ -71,8 +71,13 @@ func main() {
 		}
 	}
 
+	publisher, _ := zmq.NewSocket(zmq.PUB)
+	publisher.Bind("tcp://*:5556")
+
 	source := gopacket.NewPacketSource(handle, handle.LinkType())
 	for packet := range source.Packets() {
-		fmt.Printf("%d\n", len(packet.Data()))
+		packet_data := packet.Data()
+		fmt.Printf("%d\n", len(packet_data))
+		publisher.SendMessage(packet_data)
 	}
 }
