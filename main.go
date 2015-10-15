@@ -95,7 +95,9 @@ func main() {
 	for packet := range source.Packets() {
 		ct += 1
 		packet_data := packet.Data()
-		fmt.Printf("%d\n", len(packet_data))
+		if ct % 100000 == 0 {
+			fmt.Printf("Packets: %d\n", ct)
+		}
 		publisher := publishers[ct % *queues_num]
 		publisher.SendMessage(packet_data)
 	}
