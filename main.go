@@ -21,11 +21,28 @@ import (
 	"time"
 )
 
+var queues_num = flag.Int("q", 2, "Num of queues to publish to")
 var iface = flag.String("i", "eth0", "Interface to read packets from")
 var fname = flag.String("r", "", "Filename to read from, overrides -i")
 var snaplen = flag.Int("s", 65536, "Snap length (number of bytes max to read per packet")
 var tstype = flag.String("timestamp_type", "", "Type of timestamps to use")
 var promisc = flag.Bool("promisc", true, "Set promiscuous mode")
+
+func create_pub_socket(addr string) (*zmq.Socket) {
+	socket, _ := zmq.NewSocket(zmq.PUB)
+	socket.Bind(addr)	
+	return socket
+}
+
+func setup_publishers(n int) ([]*zmq.Socket) {
+	pub_sockets := make([]*zmq.Socket, n)
+
+	for i := 0; i < n; i++ {
+		pub_sockets[i] = create_pub_socket(fmt.Sprintf("tcp://*:%d", 5550+i))
+	}
+
+	return pub_sockets
+}
 
 func main() {
 	defer util.Run()()
@@ -71,13 +88,15 @@ func main() {
 		}
 	}
 
-	publisher, _ := zmq.NewSocket(zmq.PUB)
-	publisher.Bind("tcp://*:5556")
+	publishers := setup_publishers(*queues_num)
 
+	ct := 0
 	source := gopacket.NewPacketSource(handle, handle.LinkType())
 	for packet := range source.Packets() {
+		ct += 1
 		packet_data := packet.Data()
 		fmt.Printf("%d\n", len(packet_data))
+		publisher := publishers[ct % *queues_num]
 		publisher.SendMessage(packet_data)
 	}
 }
