@@ -8,6 +8,8 @@ https://tuananh.org/2015/06/16/how-to-install-zeromq-on-ubuntu/
 ```
 sudo apt-get install libpcap-dev golang
 
+export GOPATH=/home/vagrant/go-stuff
+
 go get github.com/yurynix/gosniff
 ```
 
